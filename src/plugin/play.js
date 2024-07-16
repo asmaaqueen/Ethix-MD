@@ -30,7 +30,7 @@ const playcommand = async (m, Matrix) => {
 
   if (validCommands.includes(cmd)) {
     if (!text) {
-      return m.reply('Please provide a search query.');
+      return m.reply('*Please provide a search query*');
     }
 
     try {
@@ -83,13 +83,14 @@ const playcommand = async (m, Matrix) => {
         {
           "name": "quick_reply",
           "buttonParamsJson": JSON.stringify({
-            display_text: "⏩ NEXT,
+            display_text: "⏩ NEXT",
             id: `next_${searchIndex + 1}`
           })
         }
       ];
 
       const thumbnailUrl = currentResult.thumbnail;
+      const url = `https://www.youtube.com/watch?v=${currentResult.videoId}`;
 
       const msg = generateWAMessageFromContent(m.from, {
         viewOnceMessage: {
@@ -100,13 +101,13 @@ const playcommand = async (m, Matrix) => {
             },
             interactiveMessage: proto.Message.InteractiveMessage.create({
               body: proto.Message.InteractiveMessage.Body.create({
-                text: `*𝞢𝙏𝞖𝞘𝞦-𝞛𝘿 YOUTUBE SEARCH*\n\n*🔍TITLE:* ${currentResult.title}\n*✍️AUTHOR:* ${currentResult.author.name}\n*🥸 VIEWS:* ${currentResult.views}\n*🏮 DURATION:* ${currentResult.timestamp}\n`
+                text: `*ETHIX-MD YOUTUBE SEARCH*\n\n> *TITLE:*  ${currentResult.title}\n> *AUTHOR:* ${currentResult.author.name}\n> *VIEWS:* ${currentResult.views}\n> *DURATION:* ${currentResult.timestamp}\n> *YTLINK:* ${url}\n`
               }),
               footer: proto.Message.InteractiveMessage.Footer.create({
                 text: "© Powered By 𝞢𝙏𝞖𝞘𝞦-𝞛𝘿"
               }),
               header: proto.Message.InteractiveMessage.Header.create({
-                 ...(await prepareWAMessageMedia({ image: { url: thumbnailUrl } }, { upload: Matrix.waUploadToServer })),
+                ...(await prepareWAMessageMedia({ image: { url: thumbnailUrl } }, { upload: Matrix.waUploadToServer })),
                 title: "",
                 gifPlayback: true,
                 subtitle: "",
@@ -176,13 +177,14 @@ const playcommand = async (m, Matrix) => {
         {
           "name": "quick_reply",
           "buttonParamsJson": JSON.stringify({
-            display_text: "⏩ NEXT,
+            display_text: "⏩ NEXT",
             id: `next_${nextIndex + 1}`
           })
         }
       ];
 
       const thumbnailUrl = currentResult.thumbnail;
+      const url = `https://www.youtube.com/watch?v=${currentResult.videoId}`;
 
       const msg = generateWAMessageFromContent(m.from, {
         viewOnceMessage: {
@@ -193,13 +195,13 @@ const playcommand = async (m, Matrix) => {
             },
             interactiveMessage: proto.Message.InteractiveMessage.create({
               body: proto.Message.InteractiveMessage.Body.create({
-                text: `*𝞢𝙏𝞖𝞘𝞦-𝞛𝘿 YOUTUBE SEARCH*\n\n*🔍TITLE:* ${currentResult.title}\n*✍️ AUTHOR:* ${currentResult.author.name}\n*🥸 VIEWS:* ${currentResult.views}\n*🏮 DURATION:* ${currentResult.timestamp}\n`
+                text: `*ETHIX-MD YOUTUBE SEARCH*\n\n> *🔍TITLE:* ${currentResult.title}\n> *AUTHOR:* ${currentResult.author.name}\n> *VIEWS:* ${currentResult.views}\n> *DURATION:* ${currentResult.timestamp}\n> *YTLINK:* ${url}`
               }),
               footer: proto.Message.InteractiveMessage.Footer.create({
                 text: "© Powered By 𝞢𝙏𝞖𝞘𝞦-𝞛𝘿"
               }),
               header: proto.Message.InteractiveMessage.Header.create({
-                 ...(await prepareWAMessageMedia({ image: { url: thumbnailUrl } }, { upload: Matrix.waUploadToServer })),
+                ...(await prepareWAMessageMedia({ image: { url: thumbnailUrl } }, { upload: Matrix.waUploadToServer })),
                 title: "",
                 gifPlayback: true,
                 subtitle: "",
@@ -237,24 +239,53 @@ const playcommand = async (m, Matrix) => {
           finalMediaBuffer = await getStreamBuffer(stream);
           mimeType = type === 'audio' || type === 'audiodoc' ? 'audio/mpeg' : 'video/mp4';
 
-          const fileSizeInMB = finalMediaBuffer.length / (1024 * 1024);
-
-          if ((type === 'audio' || type === 'video') && fileSizeInMB <= 300) {
+          if (type === 'audio') {
             content = {
-              [type]: finalMediaBuffer,
-              mimetype: mimeType,
-              caption: `Downloaded by 𝞢𝙏𝞖𝞘𝞦-𝞛𝘿`
+              audio: finalMediaBuffer,
+              mimetype: 'audio/mpeg',
+              ptt: false,
+              waveform: [100, 0, 100, 0, 100, 0, 100],
+              fileName: `${selectedMedia.title}.mp3`,
+              contextInfo: {
+                mentionedJid: [m.sender],
+                externalAdReply: {
+                  title: "↺ |◁   II   ▷|   ♡",
+                  body: `Now playing: ${selectedMedia.title}`,
+                  thumbnailUrl: selectedMedia.thumbnail,
+                  sourceUrl: videoUrl,
+                  mediaType: 1,
+                  renderLargerThumbnail: true
+                }
+              }
             };
-          } else {
+            await Matrix.sendMessage(m.from, content, { quoted: m });
+          } else if (type === 'video') {
+            content = {
+              video: finalMediaBuffer,
+              mimetype: mimeType,
+              caption: `> TITLE: ${selectedMedia.title}\n\n*Downloaded by 𝞢𝙏𝞖𝞘𝞦-𝞛𝘿*`
+            };
+            await Matrix.sendMessage(m.from, content, { quoted: m });
+          } else if (type === 'audiodoc' || type === 'videodoc') {
             content = {
               document: finalMediaBuffer,
               mimetype: mimeType,
               fileName: `${selectedMedia.title}.${type === 'audiodoc' ? 'mp3' : 'mp4'}`,
-              caption: `Downloading ${type === 'audiodoc' ? 'audio' : 'video'}: ${selectedMedia.title}\n\n* > © POWERED BY ETHIX-MD*`
+              caption: `*Downloaded by 𝞢𝙏𝞖𝞘𝞦-𝞛𝘿*`,
+              contextInfo: {
+                externalAdReply: {
+                  showAdAttribution: true,
+                  title: selectedMedia.title,
+                  body: 'Ethix-MD',
+                  thumbnailUrl: selectedMedia.thumbnail,
+                  sourceUrl: selectedMedia.url,
+                  mediaType: 1,
+                  renderLargerThumbnail: true
+                }
+              }
             };
+            await Matrix.sendMessage(m.from, content, { quoted: m });
           }
-
-          await Matrix.sendMessage(m.from, content, { quoted: m });
         } catch (error) {
           console.error("Error processing your request:", error);
           m.reply('Error processing your request.');
